@@ -10,9 +10,12 @@ class digital_ocean(ShutItModule):
 
 	def build(self, shutit):
 		# https://www.digitalocean.com/community/tutorials/how-to-set-up-a-coreos-cluster-on-digitalocean
-		# NEED: an ssh key set up with digital ocean - we take the first one seen from an API request
+		# NEED: an ssh key set up with digital ocean in a file - we take the first one seen from an API request
 		# Read in the token
-		token = open(shutit.cfg[self.module_id]['oauth_token_file']).read().strip()
+		if shutit.cfg[self.module_id]['oauth_token'] != '':
+			token = shutit.cfg[self.module_id]['oauth_token']
+		else:
+			token = open(shutit.cfg[self.module_id]['oauth_token_file']).read().strip()
 		shutit.send('export TOKEN=' + token)
 		shutit.send(r'''curl -s -w "\n" https://discovery.etcd.io/new''')
 		# Get unique coreos discovery url
@@ -24,19 +27,25 @@ class digital_ocean(ShutItModule):
 			ssh_key = shutit.get_output().strip()
 		else:
 			ssh_key = shutit.cfg[self.module_id]['ssh_key_id']
+		droplet_id_list = []
 		for machine in range(1,int(shutit.cfg[self.module_id]['num_machines']) + 1):
-			command = '''curl -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"name":"coreos-''' + str(machine) + '''","region":"nyc3","size":"512mb","image":"coreos-stable","ssh_keys":["''' + ssh_key + '''"],"backups":false,"ipv6":true,"user_data":null,"private_networking":null}' "https://api.digitalocean.com/v2/droplets"'''
+			command = '''curl -s -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"name":"coreos-''' + str(machine) + '''","region":"nyc3","size":"512mb","image":"coreos-stable","ssh_keys":["''' + ssh_key + '''"],"backups":false,"ipv6":true,"user_data":"''' + cloud_config + '''","private_networking":true}' "https://api.digitalocean.com/v2/droplets"'''
 			shutit.send_file('/tmp/cmd.sh',command)
-			shutit.send('sh /tmp/cmd.sh')
+			shutit.send('cat /tmp/cmd.sh')
+			shutit.send('sh /tmp/cmd.sh | jq ".droplet.id" -M')
+			droplet_id = shutit.get_output().strip()
+			droplet_id_list.append(droplet_id)
 			shutit.send('rm -f /tmp/cmd.sh')
-			shutit.send('sleep 60',timeout=180)
+			shutit.send('sleep 120 #Wait a decent amount of time; this seems to be required',timeout=180)
+		# TODO: delete, test, dockerfile
 		return True
 
 	def get_config(self, shutit):
 		# oauth access token filename, defaults to context/access_token.dat
+		shutit.get_config(self.module_id,'oauth_token','')
 		shutit.get_config(self.module_id,'oauth_token_file','context/access_token.dat')
 		shutit.get_config(self.module_id,'ssh_key_id','')
-		shutit.get_config(self.module_id,'num_machines','1')
+		shutit.get_config(self.module_id,'num_machines','3')
 		return True
 	
 	#def finalize(self, shutit):
@@ -48,7 +57,7 @@ class digital_ocean(ShutItModule):
 def module():
 	return digital_ocean(
 		'shutit.tk.coreos_do_setup.coreos_do_setup', 158844783.001,
-		description='Digital Ocean CoreOS setup',
+		description='Digital Ocean CoreOS cluster setup',
 		maintainer='ian.miell@gmail.com',
 		depends=['shutit.tk.sd.curl.curl','shutit.tk.sd.jq.jq']
 	)
