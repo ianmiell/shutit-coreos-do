@@ -19,7 +19,6 @@ class digital_ocean(ShutItModule):
 		discovery = shutit.get_output().strip()
 		cloud_config = open('context/cloud-config').read().strip()
 		cloud_config = string.replace(cloud_config,'DISCOVERY',discovery)
-		print cloud_config
 		if shutit.cfg[self.module_id]['ssh_key_id'] == '':
 			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -u "${TOKEN}:" "https://api.digitalocean.com/v2/account/keys" | jq -M '.ssh_keys[0].id'""")
 			ssh_key = shutit.get_output().strip()
