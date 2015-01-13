@@ -52,3 +52,5 @@ docs/_build/
 
 # PyBuilder
 target/
+
+context/access_token.dat*
