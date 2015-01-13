@@ -53,4 +53,4 @@ docs/_build/
 # PyBuilder
 target/
 
-context/access_token.dat*
+cluster_setup/context/access_token.dat
