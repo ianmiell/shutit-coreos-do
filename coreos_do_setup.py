@@ -19,23 +19,25 @@ class digital_ocean(ShutItModule):
 		discovery = shutit.get_output().strip()
 		cloud_config = open('context/cloud-config').read().strip()
 		cloud_config = string.replace(cloud_config,'DISCOVERY',discovery)
+		print cloud_config
 		if shutit.cfg[self.module_id]['ssh_key_id'] == '':
 			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -u "${TOKEN}:" "https://api.digitalocean.com/v2/account/keys" | jq -M '.ssh_keys[0].id'""")
 			ssh_key = shutit.get_output().strip()
 		else:
 			ssh_key = shutit.cfg[self.module_id]['ssh_key_id']
-		for machine in ('1','2','3'):
-			request = r'''{"name":"coreos-''' + machine + r'''","region":"nyc3","size":"512mb","image":"coreos-stable","ssh_keys":["''' + ssh_key + r'''"],"backups":false,"ipv6":true,"user_data":"''' + cloud_config + r'''","private_networking":true}'''
-			shutit.send_file('/tmp/request',request)
-			shutit.send(r'''curl -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d@/tmp/request "https://api.digitalocean.com/v2/droplets" -X POST''')
-			shutit.send('rm -f /tmp/request')
-			shutit.send('sleep 120',timeout=180)
+		for machine in range(1,int(shutit.cfg[self.module_id]['num_machines']) + 1):
+			command = '''curl -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"name":"coreos-''' + str(machine) + '''","region":"nyc3","size":"512mb","image":"coreos-stable","ssh_keys":["''' + ssh_key + '''"],"backups":false,"ipv6":true,"user_data":null,"private_networking":null}' "https://api.digitalocean.com/v2/droplets"'''
+			shutit.send_file('/tmp/cmd.sh',command)
+			shutit.send('sh /tmp/cmd.sh')
+			shutit.send('rm -f /tmp/cmd.sh')
+			shutit.send('sleep 60',timeout=180)
 		return True
 
 	def get_config(self, shutit):
 		# oauth access token filename, defaults to context/access_token.dat
 		shutit.get_config(self.module_id,'oauth_token_file','context/access_token.dat')
 		shutit.get_config(self.module_id,'ssh_key_id','')
+		shutit.get_config(self.module_id,'num_machines','1')
 		return True
 	
 	#def finalize(self, shutit):
