@@ -37,10 +37,10 @@ class digital_ocean(ShutItModule):
 			droplet_id_list.append(droplet_id)
 			shutit.send('rm -f /tmp/cmd.sh')
 			shutit.send('sleep 60 #Wait a decent amount of time; this seems to be required',timeout=180)
-		# TODO: delete, test, dockerfile
+		# TODO: auto-delete, test
 		for droplet_id in droplet_id_list:
-			shutit.send('''curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M ".droplet.networks.v4[0].ip_address"''')
-			ip = shutit.get_output()
+			shutit.send('''curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M ".droplet.networks.v4[1].ip_address"''') #assuming this is public one
+			ip = shutit.get_output().strip()
 			shutit.cfg['build']['report_final_messages'] += '\ndroplet_id: ' + droplet_id + ': ip address: '+ ip
 		return True
 
