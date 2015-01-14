@@ -49,7 +49,7 @@ class digital_ocean(ShutItModule):
 		shutit.get_config(self.module_id,'oauth_token','')
 		shutit.get_config(self.module_id,'oauth_token_file','context/access_token.dat')
 		shutit.get_config(self.module_id,'ssh_key_id','')
-		shutit.get_config(self.module_id,'num_machines','1')
+		shutit.get_config(self.module_id,'num_machines','3')
 		return True
 	
 	#def finalize(self, shutit):
