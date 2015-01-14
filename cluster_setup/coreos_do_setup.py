@@ -3,7 +3,7 @@
 from shutit_module import ShutItModule
 import string
 
-class digital_ocean(ShutItModule):
+class coreos_do_setup(ShutItModule):
 
 	def is_installed(self, shutit):
 		return False
@@ -37,11 +37,12 @@ class digital_ocean(ShutItModule):
 			droplet_id_list.append(droplet_id)
 			shutit.send('rm -f /tmp/cmd.sh')
 			shutit.send('sleep 60 #Wait a decent amount of time; this seems to be required',timeout=180)
-		# TODO: auto-delete, test
+		# TODO: test
 		for droplet_id in droplet_id_list:
-			shutit.send('''curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M ".droplet.networks.v4[1].ip_address"''') #assuming this is public one
+			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "public") | ".ip_address"'""")
 			ip = shutit.get_output().strip().strip('"')
 			shutit.cfg['build']['report_final_messages'] += 'droplet_id: ' + droplet_id + ': ip address: ' + ip + '\nLog in with: ssh core@' + ip + '\n'
+		shutit.cfg[self.module_id]['droplet_ids'] = droplet_id_list
 		return True
 
 	def get_config(self, shutit):
@@ -59,7 +60,7 @@ class digital_ocean(ShutItModule):
 	#	return True
 
 def module():
-	return digital_ocean(
+	return coreos_do_setup(
 		'shutit.tk.coreos_do_setup.coreos_do_setup', 158844783.001,
 		description='Digital Ocean CoreOS cluster setup',
 		maintainer='ian.miell@gmail.com',
