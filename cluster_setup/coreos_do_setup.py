@@ -40,7 +40,7 @@ class digital_ocean(ShutItModule):
 		# TODO: auto-delete, test
 		for droplet_id in droplet_id_list:
 			shutit.send('''curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M ".droplet.networks.v4[1].ip_address"''') #assuming this is public one
-			ip = shutit.get_output().strip()
+			ip = shutit.get_output().strip().strip('"')
 			shutit.cfg['build']['report_final_messages'] += 'droplet_id: ' + droplet_id + ': ip address: ' + ip + '\nLog in with: ssh core@' + ip + '\n'
 		return True
 
