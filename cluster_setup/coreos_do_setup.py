@@ -41,7 +41,7 @@ class digital_ocean(ShutItModule):
 		for droplet_id in droplet_id_list:
 			shutit.send('''curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M ".droplet.networks.v4[0].ip_address"''')
 			ip = shutit.get_output()
-			shutit.cfg['build']['report_final_messages'] += '\ndroplet_id: ' droplet_id + ': ip address: '+ ip
+			shutit.cfg['build']['report_final_messages'] += '\ndroplet_id: ' + droplet_id + ': ip address: '+ ip
 		return True
 
 	def get_config(self, shutit):
@@ -49,7 +49,7 @@ class digital_ocean(ShutItModule):
 		shutit.get_config(self.module_id,'oauth_token','')
 		shutit.get_config(self.module_id,'oauth_token_file','context/access_token.dat')
 		shutit.get_config(self.module_id,'ssh_key_id','')
-		shutit.get_config(self.module_id,'num_machines','1')
+		shutit.get_config(self.module_id,'num_machines','3')
 		return True
 	
 	#def finalize(self, shutit):
