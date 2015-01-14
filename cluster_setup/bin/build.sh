@@ -11,5 +11,5 @@ then
     exit 1
 fi
 pushd ..
-$SHUTIT build -m /home/imiell/shutit-distro
+$SHUTIT build -m /path/to/shutit-distro
 popd

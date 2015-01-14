@@ -36,8 +36,10 @@ class digital_ocean(ShutItModule):
 			droplet_id = shutit.get_output().strip()
 			droplet_id_list.append(droplet_id)
 			shutit.send('rm -f /tmp/cmd.sh')
-			shutit.send('sleep 120 #Wait a decent amount of time; this seems to be required',timeout=180)
+			shutit.send('sleep 60 #Wait a decent amount of time; this seems to be required',timeout=180)
 		# TODO: delete, test, dockerfile
+		for droplet_id in droplet_id_list:
+			shutit.send('''curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M ".droplet.networks.v4[0].ip_address"''')
 		return True
 
 	def get_config(self, shutit):
