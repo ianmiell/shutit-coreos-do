@@ -9,30 +9,53 @@ class kubernetes_setup(ShutItModule):
 		return False
 
 	def build(self, shutit):
+
+#https://github.com/GoogleCloudPlatform/kubernetes/blob/master/docs/getting-started-guides/coreos/cloud-configs/master.yaml
 		#From: https://github.com/bketelsen/coreos-kubernetes-digitalocean
 		#shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']
 		#Step 4
 		#Install Flannel so that each pod in the Kubernetes cluster can have it's own IP address.
 		#When you're done you should have flannel installed at /opt/bin/flannel
-		shutit.send('sleep 60')
+		#shutit.send('sleep 60') # needed?
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			public_ip = coreos_machine['public_ip']
-			shutit.pause_point(public_ip)
-			shutit.login(command='ssh -vvv core@' + public_ip)
+			private_ip = coreos_machine['private_ip']
+			shutit.login(command='ssh core@' + public_ip, expect=' ~ ')
 			shutit.send('git clone https://github.com/coreos/flannel.git')
 			shutit.send('cd flannel')
+			shutit.logout()
+		#Step 5
+		#Configure Rudder on each machine.
+		#In /etc/systemd/system on each CoreOS machine, create a service file for rudder. Use this one as a template. Replace the line IP address my template with the correct PRIVATE IP address for that machine. Remember you can get that by typing ifconfig. My private IP addresses were on eth1.
+		#Repeat this process for all three machines, ensuring that you use each machine's private ip address in the rudder.service file.
+		#Add the service to systemctl: sudo systemctl enable /etc/systemd/system/rudder.service
+		#Reload systemctl: sudo systemctl daemon-reload
+		#Start Rudder: sudo systemctl start rudder
+		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
+			shutit.login(command='ssh core@' + public_ip, expect=' ~ ')
+			public_ip = coreos_machine['public_ip']
+			private_ip = coreos_machine['private_ip']
 			shutit.send('docker run -v $(pwd):/opt/flannel -i -t google/golang /bin/bash -c "cd /opt/flannel && ./build"')
-			shutit.pause_point('/opt/bin/flannel / rudder?')
+			shutit.send('sudo touch /etc/systemd/system/flanneld.service')
+			shutit.run_script('''
+				sudo cat > /etc/systemd/system/flanneld.service << END
+				[Unit]
+				Requires=etcd.service
+				After=etcd.service
+				
+				[Service]
+				ExecStartPre=-/usr/bin/etcdctl set /coreos.com/network/config '{"Network":"10.100.0.0/16"}'
+				ExecStart=/home/core/flannel/bin/flanneld -iface=PRIVATE_IP
+				
+				[Install]
+				WantedBy=multi-user.target
+				END''')
+			shutit.send("""sudo sed -i 's/PRIVATE_IP/""" + private_ip + "'")
+			shutit.send('sudo systemctl enable /etc/systemd/system/flanneld.service')
+			shutit.send('sudo systemctl daemon-reload')
+			shutit.send('sudo systemctl start flanneld')
 			shutit.logout()
 
-#
-#Step 5
-#Configure Rudder on each machine.
-#In /etc/systemd/system on each CoreOS machine, create a service file for rudder. Use this one as a template. Replace the line IP address my template with the correct PRIVATE IP address for that machine. Remember you can get that by typing ifconfig. My private IP addresses were on eth1.
-#Repeat this process for all three machines, ensuring that you use each machine's private ip address in the rudder.service file.
-#Add the service to systemctl: sudo systemctl enable /etc/systemd/system/rudder.service
-#Reload systemctl: sudo systemctl daemon-reload
-#Start Rudder: sudo systemctl start rudder
 #
 #Step 6
 #Follow this same pattern to add docker, kubelet, and proxy services to all three machines. Remember to use YOUR private IP address in the kubelet.service file. Add each service, reload systemctl and start each service.
