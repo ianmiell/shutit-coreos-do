@@ -34,7 +34,7 @@ class coreos_do_setup(ShutItModule):
 			shutit.send('rm -f /tmp/cmd.sh')
 			shutit.send('sleep 60 #Wait a decent amount of time; this seems to be required',timeout=180)
 		for droplet_id in droplet_id_list:
-			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "public") | ".ip_address"''' + "'")
+			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "public") | .ip_address''' + "'")
 			ip = shutit.get_output().strip().strip('"')
 			shutit.cfg['build']['report_final_messages'] += 'droplet_id: ' + droplet_id + ': ip address: ' + ip + '\nLog in with: ssh core@' + ip + '\n'
 		shutit.cfg[self.module_id]['droplet_ids'] = droplet_id_list
