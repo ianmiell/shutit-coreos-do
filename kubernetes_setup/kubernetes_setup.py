@@ -14,10 +14,11 @@ class kubernetes_setup(ShutItModule):
 		#Step 4
 		#Install Flannel so that each pod in the Kubernetes cluster can have it's own IP address.
 		#When you're done you should have flannel installed at /opt/bin/flannel
+		shutit.send('sleep 60')
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			public_ip = coreos_machine['public_ip']
 			shutit.pause_point(public_ip)
-			shutit.login(command='ssh core@' + public_ip)
+			shutit.login(command='ssh -vvv core@' + public_ip)
 			shutit.send('git clone https://github.com/coreos/flannel.git')
 			shutit.send('cd flannel')
 			shutit.send('docker run -v $(pwd):/opt/flannel -i -t google/golang /bin/bash -c "cd /opt/flannel && ./build"')
