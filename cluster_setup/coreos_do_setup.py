@@ -12,13 +12,9 @@ class coreos_do_setup(ShutItModule):
 		# https://www.digitalocean.com/community/tutorials/how-to-set-up-a-coreos-cluster-on-digitalocean
 		# NEED: an ssh key set up with digital ocean in a file - we take the first one seen from an API request
 		# Read in the token
-		if shutit.cfg[self.module_id]['oauth_token'] != '':
-			token = shutit.cfg[self.module_id]['oauth_token']
-		else:
-			token = open(shutit.cfg[self.module_id]['oauth_token_file']).read().strip()
-		shutit.send('export TOKEN=' + token)
-		shutit.send(r'''curl -s -w "\n" https://discovery.etcd.io/new''')
+		_set_token(shutit)
 		# Get unique coreos discovery url
+		shutit.send(r'''curl -s -w "\n" https://discovery.etcd.io/new''')
 		discovery = shutit.get_output().strip()
 		cloud_config = open('context/cloud-config').read().strip()
 		cloud_config = string.replace(cloud_config,'DISCOVERY',discovery)
@@ -37,7 +33,6 @@ class coreos_do_setup(ShutItModule):
 			droplet_id_list.append(droplet_id)
 			shutit.send('rm -f /tmp/cmd.sh')
 			shutit.send('sleep 60 #Wait a decent amount of time; this seems to be required',timeout=180)
-		# TODO: test
 		for droplet_id in droplet_id_list:
 			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "public") | ".ip_address"'""")
 			ip = shutit.get_output().strip().strip('"')
@@ -51,13 +46,23 @@ class coreos_do_setup(ShutItModule):
 		shutit.get_config(self.module_id,'oauth_token_file','context/access_token.dat')
 		shutit.get_config(self.module_id,'ssh_key_id','')
 		shutit.get_config(self.module_id,'num_machines','3')
+		# Whether to delete machines on finalization.
+		shutit.get_config(self.module_id,'delete_machines',False,boolean=True)
 		return True
 	
-	#def finalize(self, shutit):
-	#	return True
+	def finalize(self, shutit):
+		if shutit.cfg[self.module_id]['delete_machines']:
+			_set_token(shutit)
+			for droplet_id in shutit.cfg[self.module_id]['droplet_ids']:
+				shutit.send('''curl -X DELETE -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '"')
+		return True
 
-	#def test(self, shutit):
-	#	return True
+	def _set_token(shutit):
+		if shutit.cfg[self.module_id]['oauth_token'] != '':
+			token = shutit.cfg[self.module_id]['oauth_token']
+		else:
+			token = open(shutit.cfg[self.module_id]['oauth_token_file']).read().strip()
+		shutit.send('export TOKEN=' + token)
 
 def module():
 	return coreos_do_setup(
