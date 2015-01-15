@@ -12,7 +12,7 @@ class coreos_do_setup(ShutItModule):
 		# https://www.digitalocean.com/community/tutorials/how-to-set-up-a-coreos-cluster-on-digitalocean
 		# NEED: an ssh key set up with digital ocean in a file - we take the first one seen from an API request
 		# Read in the token
-		_set_token(shutit)
+		self._set_token(shutit)
 		# Get unique coreos discovery url
 		shutit.send(r'''curl -s -w "\n" https://discovery.etcd.io/new''')
 		discovery = shutit.get_output().strip()
