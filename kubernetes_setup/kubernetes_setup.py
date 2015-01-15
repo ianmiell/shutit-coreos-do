@@ -16,7 +16,7 @@ class kubernetes_setup(ShutItModule):
 		#When you're done you should have flannel installed at /opt/bin/flannel
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			public_ip = coreos_machine['public_ip']
-			shutit.login(command='ssh core@' + public_ip,expect="core@")
+			shutit.login(command='ssh core@' + public_ip)
 			shutit.send('git clone https://github.com/coreos/flannel.git')
 			shutit.send('cd flannel')
 			shutit.send('docker run -v $(pwd):/opt/flannel -i -t google/golang /bin/bash -c "cd /opt/flannel && ./build"')
@@ -53,6 +53,6 @@ def module():
 		'shutit.tk.kubernetes_setup.kubernetes_setup', 158844783.002,
 		description='Digital Ocean CoreOS cluster setup',
 		maintainer='ian.miell@gmail.com',
-		depends=['shutit.tk.coreos_do_setup.coreos_do_setup']
+		depends=['shutit.tk.coreos_do_setup.coreos_do_setup','shutit.tk.sd.openssh.openssh']
 	)
 

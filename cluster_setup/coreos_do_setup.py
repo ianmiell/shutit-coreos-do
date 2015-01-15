@@ -33,11 +33,11 @@ class coreos_do_setup(ShutItModule):
 			droplet_id = shutit.get_output().strip()
 			shutit.send('rm -f /tmp/cmd.sh')
 			shutit.send('sleep ' + shutit.cfg[self.module_id]['creation_wait'] + ' # Wait a decent amount of time; this seems to be required',timeout=180)
-			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "public") | ".ip_address"'""")
+			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "public") | .ip_address''' + "'")
 			public_ip = shutit.get_output().strip().strip('"')
-			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "private") | ".ip_address"'""")
+			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "private") | .ip_address''' + "'")
 			private_ip = shutit.get_output().strip().strip('"')
-			shutit.cfg['build']['report_final_messages'] += 'droplet_id: ' + droplet_id + ': ip address: ' + public_ip + '\nLog in with: ssh core@' + ip + '\n'
+			shutit.cfg['build']['report_final_messages'] += 'droplet_id: ' + droplet_id + ': ip address: ' + public_ip + '\nLog in with: ssh core@' + public_ip + '\n'
 			if machine == 1:
 				coreos_type = "master"
 			else:
