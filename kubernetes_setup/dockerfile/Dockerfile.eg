@@ -1,0 +1,12 @@
+FROM imiell/sd_shutit
+
+WORKDIR /opt
+RUN git clone https://github.com/ianmiell/shutit-coreos-do.git
+RUN git clone https://github.com/ianmiell/shutit-distro.git
+WORKDIR /opt/shutit-coreos-do/kubernetes_setup
+
+# replace YOUR_ACCESS_TOKEN with your digital ocean access token
+RUN /opt/shutit/shutit build --shutit_module_path /opt/shutit-distro -s shutit.tk.coreos_do_setup.coreos_do_setup oauth_token YOUR_ACCESS_TOKEN --delivery bash
+
+# Don't run this - the image's purpose is to set up the kubernetes cluster
+CMD ["/bin/false"] 
