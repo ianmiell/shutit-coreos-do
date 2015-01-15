@@ -57,7 +57,7 @@ class coreos_do_setup(ShutItModule):
 				shutit.send('''curl -X DELETE -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '"')
 		return True
 
-	def _set_token(shutit):
+	def _set_token(self, shutit):
 		if shutit.cfg[self.module_id]['oauth_token'] != '':
 			token = shutit.cfg[self.module_id]['oauth_token']
 		else:
