@@ -32,7 +32,7 @@ class coreos_do_setup(ShutItModule):
 			shutit.send('sh /tmp/cmd.sh | jq ".droplet.id" -M')
 			droplet_id = shutit.get_output().strip()
 			shutit.send('rm -f /tmp/cmd.sh')
-			shutit.send('sleep 60 #Wait a decent amount of time; this seems to be required',timeout=180)
+			shutit.send('sleep ' + shutit.cfg[self.module_id]['creation_wait'] + ' # Wait a decent amount of time; this seems to be required',timeout=180)
 			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "public") | ".ip_address"'""")
 			public_ip = shutit.get_output().strip().strip('"')
 			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "private") | ".ip_address"'""")
@@ -51,6 +51,7 @@ class coreos_do_setup(ShutItModule):
 		shutit.get_config(self.module_id,'oauth_token_file','context/access_token.dat')
 		shutit.get_config(self.module_id,'ssh_key_id','')
 		shutit.get_config(self.module_id,'num_machines','3')
+		shutit.get_config(self.module_id,'creation_wait','60')
 		# Whether to delete machines on finalization.
 		shutit.get_config(self.module_id,'delete_machines',False,boolean=True)
 		return True

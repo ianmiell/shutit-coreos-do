@@ -11,19 +11,18 @@ class kubernetes_setup(ShutItModule):
 	def build(self, shutit):
 		#From: https://github.com/bketelsen/coreos-kubernetes-digitalocean
 		#shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']
+		#Step 4
+		#Install Flannel so that each pod in the Kubernetes cluster can have it's own IP address.
+		#When you're done you should have flannel installed at /opt/bin/flannel
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
-			print coreos_machine
 			public_ip = coreos_machine['public_ip']
 			shutit.login(command='ssh core@' + public_ip,expect="core@")
 			shutit.send('git clone https://github.com/coreos/flannel.git')
 			shutit.send('cd flannel')
 			shutit.send('docker run -v $(pwd):/opt/flannel -i -t google/golang /bin/bash -c "cd /opt/flannel && ./build"')
+			shutit.pause_point('/opt/bin/flannel / rudder?')
 			shutit.logout()
 
-#Step 4
-#Install Flannel so that each pod in the Kubernetes cluster can have it's own IP address.
-#On one of the CoreOS machines, checkout the Rudder source and follow the instructions to use their docker container to build Rudder.
-#When you're done you should have Rudder installed at /opt/bin/rudder
 #
 #Step 5
 #Configure Rudder on each machine.
