@@ -11,5 +11,5 @@ then
     exit 1
 fi
 pushd ..
-$SHUTIT build -m /path/to/shutit-distro
+/space/git/shutit/shutit build --shutit_module_path /space/git/shutit-distro:.. -s shutit.tk.coreos_do_setup.coreos_do_setup oauth_token TOKEN -s shutit.tk.coreos_do_setup.coreos_do_setup num_machines 1 -s shutit.tk.coreos_do_setup.coreos_do_setup keyfile /home/${USER}/.ssh/id_rsa
 popd

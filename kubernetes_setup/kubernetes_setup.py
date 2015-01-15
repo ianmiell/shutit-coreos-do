@@ -16,6 +16,7 @@ class kubernetes_setup(ShutItModule):
 		#When you're done you should have flannel installed at /opt/bin/flannel
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			public_ip = coreos_machine['public_ip']
+			shutit.pause_point(public_ip)
 			shutit.login(command='ssh core@' + public_ip)
 			shutit.send('git clone https://github.com/coreos/flannel.git')
 			shutit.send('cd flannel')
