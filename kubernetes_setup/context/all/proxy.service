@@ -1,0 +1,14 @@
+[Unit]
+Description=Kubernetes proxy server
+After=etcd.service
+After=docker.service
+Wants=etcd.service
+Wants=docker.service
+
+[Service]
+ExecStart=/opt/bin/kube-proxy --etcd_servers=http://127.0.0.1:4001 --logtostderr=true
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
