@@ -16,15 +16,19 @@ class coreos_do_setup(ShutItModule):
 		# Get unique coreos discovery url
 		shutit.send(r'''curl -s -w "\n" https://discovery.etcd.io/new''')
 		discovery = shutit.get_output().strip()
-		cloud_config = open('context/cloud-config').read().strip()
-		cloud_config = string.replace(cloud_config,'DISCOVERY',discovery)
 		if shutit.cfg[self.module_id]['ssh_key_id'] == '':
 			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -u "${TOKEN}:" "https://api.digitalocean.com/v2/account/keys" | jq -M '.ssh_keys[0].id'""")
 			ssh_key = shutit.get_output().strip()
 		else:
 			ssh_key = shutit.cfg[self.module_id]['ssh_key_id']
+		# ssh keys
+		shutit.send('mkdir -p /root/.ssh')
+		shutit.send_host_file('/root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'],shutit.cfg[self.module_id]['ssh_key_file'])
+		shutit.send('chmod 0600 /root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'])
 		shutit.cfg[self.module_id]['droplet_ids'] = []
 		for machine in range(1,int(shutit.cfg[self.module_id]['num_machines']) + 1):
+			cloud_config = open('context/cloud-config').read().strip()
+			cloud_config = string.replace(cloud_config,'DISCOVERY',discovery)
 			command = '''curl -s -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"name":"coreos-''' + str(machine) + '''","region":"nyc3","size":"512mb","image":"coreos-stable","ssh_keys":["''' + ssh_key + '''"],"backups":false,"ipv6":true,"user_data":"''' + cloud_config + '''","private_networking":true}' "https://api.digitalocean.com/v2/droplets"'''
 			shutit.send_file('/tmp/cmd.sh',command)
 			shutit.send('sh /tmp/cmd.sh | jq ".droplet.id" -M')
@@ -43,6 +47,8 @@ class coreos_do_setup(ShutItModule):
 		shutit.get_config(self.module_id,'oauth_token_file','context/access_token.dat')
 		shutit.get_config(self.module_id,'ssh_key_id','')
 		shutit.get_config(self.module_id,'num_machines','3')
+		shutit.get_config(self.module_id,'ssh_key_file')
+		shutit.get_config(self.module_id,'ssh_key_filename','id_rsa')
 		# Whether to delete machines on finalization.
 		shutit.get_config(self.module_id,'delete_machines',False,boolean=True)
 		return True
@@ -52,6 +58,7 @@ class coreos_do_setup(ShutItModule):
 			self._set_token(shutit)
 			for droplet_id in shutit.cfg[self.module_id]['droplet_ids']:
 				shutit.send('''curl -X DELETE -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '"')
+		shutit.send('rm -rf /root/.ssh')
 		return True
 
 	def _set_token(self, shutit):
@@ -66,6 +73,6 @@ def module():
 		'shutit.tk.coreos_do_setup.coreos_do_setup', 158844783.001,
 		description='Digital Ocean CoreOS cluster setup',
 		maintainer='ian.miell@gmail.com',
-		depends=['shutit.tk.sd.curl.curl','shutit.tk.sd.jq.jq']
+		depends=['shutit.tk.sd.curl.curl','shutit.tk.sd.jq.jq','shutit.tk.sd.openssh.openssh']
 	)
 
