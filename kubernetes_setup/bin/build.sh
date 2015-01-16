@@ -13,6 +13,7 @@ fi
 pushd ..
 # eg
 $SHUTIT build --shutit_module_path ..:/path/to/shutit-distro -s shutit.tk.coreos_do_setup.coreos_do_setup oauth_token DO_TOKEN -s shutit.tk.coreos_do_setup.coreos_do_setup keyfile /home/imiell/.ssh/id_rsa -s shutit.tk.coreos_do_setup.coreos_do_setup num_machines 1
+# shutit build --shutit_module_path /home/imiell/shutit-distro:.. -s shutit.tk.coreos_do_setup.coreos_do_setup oauth_token $DO_TOKEN -s shutit.tk.coreos_do_setup.coreos_do_setup ssh_key_file id_rsa -s shutit.tk.coreos_do_setup.coreos_do_setup ssh_key_id $(ssh-keygen -l -f /home/imiell/.ssh/id_rsa | awk '{print $2}') -s shutit.tk.coreos_do_setup.coreos_do_setup num_machines 3
 # Found YOUR_TARGET_PASSWORD in your config, you may want to quit and override, eg put the following into your
 
 popd

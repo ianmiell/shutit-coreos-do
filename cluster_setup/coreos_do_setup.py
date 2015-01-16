@@ -25,8 +25,8 @@ class coreos_do_setup(ShutItModule):
 		shutit.send('mkdir -p /root/.ssh')
 		shutit.send_host_file('/root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'],shutit.cfg[self.module_id]['ssh_key_file'])
 		shutit.send('chmod 0600 /root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'])
-		shutit.send('eval `ssh-agent -s`')
-		shutit.send('ssh-add ~/.ssh/id_rsa')
+		#shutit.send('eval `ssh-agent -s`')
+		#shutit.send('ssh-add ' + shutit.cfg[self.module_id]['ssh_key_filename'])
 		shutit.cfg[self.module_id]['created_droplets'] = []
 		for machine in range(1,int(shutit.cfg[self.module_id]['num_machines']) + 1):
 			cloud_config = open('context/cloud-config').read().strip()
@@ -41,9 +41,13 @@ class coreos_do_setup(ShutItModule):
 			public_ip = shutit.get_output().strip().strip('"')
 			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "private") | .ip_address''' + "'")
 			private_ip = shutit.get_output().strip().strip('"')
-
 			shutit.cfg['build']['report_final_messages'] += 'droplet_id: ' + droplet_id + ': ip address: ' + public_ip + '\nLog in with: ssh core@' + public_ip + '\n'
 			shutit.cfg[self.module_id]['created_droplets'].append({"droplet_id":droplet_id,"public_ip":public_ip,"private_ip":private_ip,"ssh_key_id":ssh_key_id})
+		# Copy private keys over - copy-ssh-id doesn't work as already authorized -A appears not to work internally.
+		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
+			shutit.send('sleep 60 # Wait a decent amount of time; this seems to be required',timeout=180)
+			public_ip = coreos_machine['public_ip']
+			shutit.multisend('''scp /root/.ssh/''' + shutit.cfg[self.module_id]['ssh_key_filename'] + ' core@' + public_ip + ':.ssh/',{'connecting':'yes'})
 		return True
 
 	def get_config(self, shutit):

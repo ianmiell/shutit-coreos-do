@@ -19,7 +19,6 @@ class kubernetes_setup(ShutItModule):
 			shutit.send('sudo mkdir -p /opt/bin')
 			shutit.send('docker run -i -t google/golang /bin/bash -c "go get github.com/coreos/flannel"')
 			shutit.send('sudo docker cp $(docker ps -l -q):/gopath/bin/flannel /opt/bin/')
-			shutit.logout()
 			shutit.send('cd ~')
 			shutit.send('git clone https://github.com/GoogleCloudPlatform/kubernetes.git')
 			shutit.send('cd kubernetes/build')
@@ -27,15 +26,14 @@ class kubernetes_setup(ShutItModule):
 			shutit.send('cd ~/kubernetes/_output/dockerized/bin/linux/amd64')
 			shutit.send('sudo mkdir -p /opt/bin')
 			shutit.send('sudo cp * /opt/bin')
-			shutit.send('cd /opt/bin')
-		# Trouble with copying function
-		#for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
-		#	public_ip = coreos_machine['public_ip']
-		#	if public_ip == master_public_ip:
-		#		# No need to do this on master!
-		#		continue
-		#	shutit.multisend('tar -czf - . | ssh core@' + public_ip + ' "sudo mkdir -p /opt/bin; cd /opt/bin; sudo tar xzvf -"',{'connecting':'yes'})
-		#	shutit.pause_point('')
+		shutit.send('cd /opt/bin')
+		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
+			public_ip = coreos_machine['public_ip']
+			if public_ip == master_public_ip:
+				# No need to do this on master!
+				continue
+			shutit.multisend('tar -czf - . | ssh core@' + public_ip + ' "sudo mkdir -p /opt/bin; cd /opt/bin; sudo tar xzvf -"',{'connecting':'yes'})
+			shutit.pause_point('')
 		shutit.logout()
 		return True
 
