@@ -15,17 +15,19 @@ class kubernetes_setup(ShutItModule):
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			public_ip = coreos_machine['public_ip']
 			private_ip = coreos_machine['private_ip']
-			shutit.login(command='ssh -A core@' + public_ip, expect=' ~ ')
+			shutit.login(command='ssh core@' + public_ip, expect=' ~ ')
 			shutit.send('sudo mkdir -p /opt/bin')
 			shutit.send('docker run -i -t google/golang /bin/bash -c "go get github.com/coreos/flannel"')
 			shutit.send('sudo docker cp $(docker ps -l -q):/gopath/bin/flannel /opt/bin/')
-			shutit.send('cd ~')
-			shutit.send('git clone https://github.com/GoogleCloudPlatform/kubernetes.git')
-			shutit.send('cd kubernetes/build')
-			shutit.multisend('./release.sh',{'Download it now':'y'})
-			shutit.send('cd ~/kubernetes/_output/dockerized/bin/linux/amd64')
-			shutit.send('sudo mkdir -p /opt/bin')
-			shutit.send('sudo cp * /opt/bin')
+			shutit.logout()
+		shutit.login(command='ssh core@' + master_public_ip, expect=' ~ ')
+		shutit.send('cd ~')
+		shutit.send('git clone https://github.com/GoogleCloudPlatform/kubernetes.git')
+		shutit.send('cd kubernetes/build')
+		shutit.multisend('./release.sh',{'Download it now':'y'})
+		shutit.send('cd ~/kubernetes/_output/dockerized/bin/linux/amd64')
+		shutit.send('sudo mkdir -p /opt/bin')
+		shutit.send('sudo cp * /opt/bin')
 		shutit.send('cd /opt/bin')
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			public_ip = coreos_machine['public_ip']
