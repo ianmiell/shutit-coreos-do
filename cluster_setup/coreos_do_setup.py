@@ -25,7 +25,7 @@ class coreos_do_setup(ShutItModule):
 		shutit.send('mkdir -p /root/.ssh')
 		shutit.send_host_file('/root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'],shutit.cfg[self.module_id]['ssh_key_file'])
 		shutit.send('chmod 0600 /root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'])
-		shutit.cfg[self.module_id]['droplet_ids'] = []
+		shutit.cfg[self.module_id]['created_droplets'] = []
 		for machine in range(1,int(shutit.cfg[self.module_id]['num_machines']) + 1):
 			cloud_config = open('context/cloud-config').read().strip()
 			cloud_config = string.replace(cloud_config,'DISCOVERY',discovery)
@@ -38,7 +38,7 @@ class coreos_do_setup(ShutItModule):
 			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "public") | .ip_address''' + "'")
 			ip = shutit.get_output().strip().strip('"')
 			shutit.cfg['build']['report_final_messages'] += 'droplet_id: ' + droplet_id + ': ip address: ' + ip + '\nLog in with: ssh core@' + ip + '\n'
-			shutit.cfg[self.module_id]['droplet_ids'].append(droplet_id)
+			shutit.cfg[self.module_id]['created_droplets'].append({"droplet_id":droplet_id,"public_ip":public_ip,"private_ip":private_ip,"ssh_key_id":ssh_key_id})
 		return True
 
 	def get_config(self, shutit):
@@ -56,8 +56,8 @@ class coreos_do_setup(ShutItModule):
 	def finalize(self, shutit):
 		if shutit.cfg[self.module_id]['delete_machines']:
 			self._set_token(shutit)
-			for droplet_id in shutit.cfg[self.module_id]['droplet_ids']:
-				shutit.send('''curl -X DELETE -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '"')
+			for droplet_data in shutit.cfg[self.module_id]['created_droplets']:
+				shutit.send('''curl -X DELETE -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_data['droplet_id'] + '"')
 		shutit.send('rm -rf /root/.ssh')
 		return True
 
