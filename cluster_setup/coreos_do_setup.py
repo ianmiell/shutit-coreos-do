@@ -18,26 +18,31 @@ class coreos_do_setup(ShutItModule):
 		discovery = shutit.get_output().strip()
 		if shutit.cfg[self.module_id]['ssh_key_id'] == '':
 			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -u "${TOKEN}:" "https://api.digitalocean.com/v2/account/keys" | jq -M '.ssh_keys[0].id'""")
-			ssh_key = shutit.get_output().strip()
+			ssh_key_id = shutit.get_output().strip()
 		else:
-			ssh_key = shutit.cfg[self.module_id]['ssh_key_id']
+			ssh_key_id = shutit.cfg[self.module_id]['ssh_key_id']
 		# ssh keys
 		shutit.send('mkdir -p /root/.ssh')
 		shutit.send_host_file('/root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'],shutit.cfg[self.module_id]['ssh_key_file'])
 		shutit.send('chmod 0600 /root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'])
+		shutit.send('eval `ssh-agent -s`')
+		shutit.send('ssh-add ~/.ssh/id_rsa')
 		shutit.cfg[self.module_id]['created_droplets'] = []
 		for machine in range(1,int(shutit.cfg[self.module_id]['num_machines']) + 1):
 			cloud_config = open('context/cloud-config').read().strip()
 			cloud_config = string.replace(cloud_config,'DISCOVERY',discovery)
-			command = '''curl -s -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"name":"coreos-''' + str(machine) + '''","region":"nyc3","size":"512mb","image":"coreos-stable","ssh_keys":["''' + ssh_key + '''"],"backups":false,"ipv6":true,"user_data":"''' + cloud_config + '''","private_networking":true}' "https://api.digitalocean.com/v2/droplets"'''
+			command = '''curl -s -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"name":"coreos-''' + str(machine) + '''","region":"nyc3","size":"512mb","image":"coreos-stable","ssh_keys":["''' + ssh_key_id + '''"],"backups":false,"ipv6":true,"user_data":"''' + cloud_config + '''","private_networking":true}' "https://api.digitalocean.com/v2/droplets"'''
 			shutit.send_file('/tmp/cmd.sh',command)
 			shutit.send('sh /tmp/cmd.sh | jq ".droplet.id" -M')
 			droplet_id = shutit.get_output().strip()
 			shutit.send('rm -f /tmp/cmd.sh')
 			shutit.send('sleep 60 # Wait a decent amount of time; this seems to be required',timeout=180)
 			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "public") | .ip_address''' + "'")
-			ip = shutit.get_output().strip().strip('"')
-			shutit.cfg['build']['report_final_messages'] += 'droplet_id: ' + droplet_id + ': ip address: ' + ip + '\nLog in with: ssh core@' + ip + '\n'
+			public_ip = shutit.get_output().strip().strip('"')
+			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "private") | .ip_address''' + "'")
+			private_ip = shutit.get_output().strip().strip('"')
+
+			shutit.cfg['build']['report_final_messages'] += 'droplet_id: ' + droplet_id + ': ip address: ' + public_ip + '\nLog in with: ssh core@' + public_ip + '\n'
 			shutit.cfg[self.module_id]['created_droplets'].append({"droplet_id":droplet_id,"public_ip":public_ip,"private_ip":private_ip,"ssh_key_id":ssh_key_id})
 		return True
 
