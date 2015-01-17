@@ -49,13 +49,14 @@ class kubernetes_setup(ShutItModule):
 				shutit.send('sudo cp /tmp/' + filename + ' /etc/systemd/system/' + filename)
 				shutit.send('rm -f /tmp/' + filename)
 			shutit.logout()
-		# Now enable and reboot
+		# Now enable services
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			public_ip = coreos_machine['public_ip']
 			shutit.login(command='ssh core@' + public_ip, expect=' ~ ')
 			shutit.send('cd /etc/systemd/system')
 			shutit.send('sudo systemctl enable *')
 			shutit.logout()
+		# Now reboot
 		self._set_token(shutit)
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			droplet_id = coreos_machine['droplet_id']
