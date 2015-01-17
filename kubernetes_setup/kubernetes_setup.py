@@ -21,7 +21,6 @@ class kubernetes_setup(ShutItModule):
 			shutit.send('sudo docker cp $(docker ps -l -q):/gopath/bin/flannel /opt/bin/')
 			shutit.logout()
 		shutit.login(command='ssh core@' + master_public_ip, expect=' ~ ')
-		shutit.send('cd ~')
 		shutit.send('git clone https://github.com/GoogleCloudPlatform/kubernetes.git')
 		shutit.send('cd kubernetes/build')
 		shutit.multisend('./release.sh',{'Download it now':'y'})
