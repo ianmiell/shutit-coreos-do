@@ -34,8 +34,7 @@ class kubernetes_setup(ShutItModule):
 			if public_ip == master_public_ip:
 				# No need to do this on master!
 				continue
-			shutit.multisend('tar -czf - . | ssh core@' + public_ip + ' "sudo mkdir -p /opt/bin; cd /opt/bin; sudo tar xzvf -"',{'connecting':'yes'})
-			shutit.pause_point('')
+			shutit.multisend('tar -czf - . | ssh core@' + public_ip + ' "sudo mkdir -p /opt/bin; cd /opt/bin; sudo tar xzvf -"',{'connecting':'yes'},timeout=60)
 		shutit.logout()
 		# set up services by copying files
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
@@ -56,13 +55,26 @@ class kubernetes_setup(ShutItModule):
 			shutit.login(command='ssh core@' + public_ip, expect=' ~ ')
 			shutit.send('cd /etc/systemd/system')
 			shutit.send('sudo systemctl enable *')
-			shutit.logout(command='sudo reboot')
+			shutit.logout()
+		self._set_token(shutit)
+		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
+			droplet_id = coreos_machine['droplet_id']
+			shutit.send('''curl -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"type":"reboot"}' "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''/actions"''')
 		# wait for it...
-		#shutit.send('sleep 120')
+		shutit.send('sleep 120')
 		return True
 
 	def get_config(self, shutit):
 		return True
+
+	def _set_token(self, shutit):
+		if shutit.cfg[self.module_id]['oauth_token'] != '':
+			token = shutit.cfg[self.module_id]['oauth_token']
+		else:
+			token = open(shutit.cfg[self.module_id]['oauth_token_file']).read().strip()
+		shutit.send('export TOKEN=' + token)
+
+
 	
 def module():
 	return kubernetes_setup(
