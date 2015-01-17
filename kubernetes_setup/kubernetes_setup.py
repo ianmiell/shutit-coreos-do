@@ -48,6 +48,7 @@ class kubernetes_setup(ShutItModule):
 				shutit.send_host_file('/tmp/' + filename,'context/all/' + filename)
 				shutit.send('sudo cp /tmp/' + filename + ' /etc/systemd/system/' + filename)
 				shutit.send('rm -f /tmp/' + filename)
+			shutit.logout()
 		# Now enable and reboot
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			public_ip = coreos_machine['public_ip']
