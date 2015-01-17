@@ -37,6 +37,28 @@ class kubernetes_setup(ShutItModule):
 			shutit.multisend('tar -czf - . | ssh core@' + public_ip + ' "sudo mkdir -p /opt/bin; cd /opt/bin; sudo tar xzvf -"',{'connecting':'yes'})
 			shutit.pause_point('')
 		shutit.logout()
+		# set up services by copying files
+		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
+			public_ip = coreos_machine['public_ip']
+			shutit.login(command='ssh core@' + public_ip, expect=' ~ ')
+			if public_ip == master_public_ip:
+				for filename in ('controller-manager.service','apiserver.service'):
+					shutit.send_host_file('/tmp/' + filename,'context/master/' + filename)
+					shutit.send('sudo cp /tmp/' + filename + ' /etc/systemd/system/' + filename)
+					shutit.send('rm -f /tmp/' + filename)
+			for filename in ('kubelet.service','proxy.service','docker.service','flannel.service','scheduler.service'):
+				shutit.send_host_file('/tmp/' + filename,'context/all/' + filename)
+				shutit.send('sudo cp /tmp/' + filename + ' /etc/systemd/system/' + filename)
+				shutit.send('rm -f /tmp/' + filename)
+		# Now enable and reboot
+		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
+			public_ip = coreos_machine['public_ip']
+			shutit.login(command='ssh core@' + public_ip, expect=' ~ ')
+			shutit.send('cd /etc/systemd/system')
+			shutit.send('sudo systemctl enable *')
+			shutit.logout(command='sudo reboot')
+		# wait for it...
+		#shutit.send('sleep 120')
 		return True
 
 	def get_config(self, shutit):
