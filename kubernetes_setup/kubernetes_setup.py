@@ -63,7 +63,7 @@ class kubernetes_setup(ShutItModule):
 			shutit.send('sudo systemctl enable *')
 			shutit.logout()
 		# Now reboot
-		self._set_token(shutit)
+		cluster_config.cluster_config.set_token(shutit)
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			droplet_id = coreos_machine['droplet_id']
 			shutit.send('''curl -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"type":"reboot"}' "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''/actions"''')
@@ -74,20 +74,11 @@ class kubernetes_setup(ShutItModule):
 	def get_config(self, shutit):
 		return True
 
-	def _set_token(self, shutit):
-		if shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['oauth_token'] != '':
-			token = shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['oauth_token']
-		else:
-			token = open(shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['oauth_token_file']).read().strip()
-		shutit.send('export TOKEN=' + token)
-
-
-	
 def module():
 	return kubernetes_setup(
 		'shutit.tk.kubernetes_setup.kubernetes_setup', 158844783.002,
 		description='Kubernetes on CoreOS',
 		maintainer='ian.miell@gmail.com',
-		depends=['shutit.tk.coreos_do_setup.coreos_do_setup']
+		depends=['shutit.tk.cluster_config.cluster_config','shutit.tk.coreos_do_setup.coreos_do_setup']
 	)
 
