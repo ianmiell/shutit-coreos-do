@@ -30,10 +30,10 @@ class cluster_delete(ShutItModule):
 		return True
 
 	def _set_token(self, shutit):
-		if shutit.cfg[self.module_id]['oauth_token'] != '':
-			token = shutit.cfg[self.module_id]['oauth_token']
+		if shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['oauth_token'] != '':
+			token = shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['oauth_token']
 		else:
-			token = open(shutit.cfg[self.module_id]['oauth_token_file']).read().strip()
+			token = open(shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['oauth_token_file']).read().strip()
 		shutit.send('export TOKEN=' + token)
 
 def module():
