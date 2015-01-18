@@ -18,7 +18,7 @@ class cluster_delete(ShutItModule):
 		droplet_id_list = droplet_ids.split()
 		for droplet_id in droplet_id_list:
 			shutit.send('''curl -s -X DELETE -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '"')
-            shutit.log('droplet_id ' + droplet_id + ' deleted.', add_final_message=True)
+			shutit.log('droplet_id ' + droplet_id + ' deleted.', add_final_message=True)
 		return True
 
 	def get_config(self, shutit):

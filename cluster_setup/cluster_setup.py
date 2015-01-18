@@ -23,10 +23,11 @@ class coreos_do_setup(ShutItModule):
 			ssh_key_id = shutit.cfg[self.module_id]['ssh_key_id']
 		# ssh keys
 		shutit.send('mkdir -p /root/.ssh')
-		shutit.send_host_file('/root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'],shutit.cfg[self.module_id]['ssh_key_file'])
-		shutit.send('chmod 0600 /root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'])
-		#shutit.send('eval `ssh-agent -s`')
-		#shutit.send('ssh-add ' + shutit.cfg[self.module_id]['ssh_key_filename'])
+		if shutit.cfg[self.module_id]['ssh_key_file'] != '':
+			shutit.send_host_file('/root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'],shutit.cfg[self.module_id]['ssh_key_file'])
+			shutit.send('chmod 0600 /root/.ssh/' + shutit.cfg[self.module_id]['ssh_key_filename'])
+			#shutit.send('eval `ssh-agent -s`')
+			#shutit.send('ssh-add ' + shutit.cfg[self.module_id]['ssh_key_filename'])
 		shutit.cfg[self.module_id]['created_droplets'] = []
 		for machine in range(1,int(shutit.cfg[self.module_id]['num_machines']) + 1):
 			cloud_config = open('context/cloud-config').read().strip()
@@ -44,10 +45,11 @@ class coreos_do_setup(ShutItModule):
 			shutit.log('droplet_id: ' + droplet_id + ': ip address: ' + public_ip + '\nLog in with: ssh core@' + public_ip, add_final_message=True)
 			shutit.cfg[self.module_id]['created_droplets'].append({"droplet_id":droplet_id,"public_ip":public_ip,"private_ip":private_ip,"ssh_key_id":ssh_key_id})
 		# Copy private keys over - copy-ssh-id doesn't work as already authorized -A appears not to work internally.
-		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
-			shutit.send('sleep 60 # Wait a decent amount of time; this seems to be required',timeout=180)
-			public_ip = coreos_machine['public_ip']
-			shutit.multisend('''scp /root/.ssh/''' + shutit.cfg[self.module_id]['ssh_key_filename'] + ' core@' + public_ip + ':.ssh/',{'connecting':'yes'})
+		if shutit.cfg[self.module_id]['ssh_key_file'] != '':
+			for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
+				shutit.send('sleep 60 # Wait a decent amount of time; this seems to be required',timeout=180)
+				public_ip = coreos_machine['public_ip']
+				shutit.multisend('''scp /root/.ssh/''' + shutit.cfg[self.module_id]['ssh_key_filename'] + ' core@' + public_ip + ':.ssh/',{'connecting':'yes'})
 		return True
 
 	def get_config(self, shutit):
@@ -56,7 +58,7 @@ class coreos_do_setup(ShutItModule):
 		shutit.get_config(self.module_id,'oauth_token_file','context/access_token.dat')
 		shutit.get_config(self.module_id,'ssh_key_id','')
 		shutit.get_config(self.module_id,'num_machines','3')
-		shutit.get_config(self.module_id,'ssh_key_file')
+		shutit.get_config(self.module_id,'ssh_key_file','') # optional, but needed for kub setup
 		shutit.get_config(self.module_id,'ssh_key_filename','id_rsa')
 		# Whether to delete machines on finalization.
 		shutit.get_config(self.module_id,'delete_machines',False,boolean=True)
