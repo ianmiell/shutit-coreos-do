@@ -54,5 +54,5 @@ docs/_build/
 target/
 
 cluster_setup/context/access_token.dat
-cluster_setup/dockerfile/Dockerfile
+*/dockerfile/Dockerfile
 
