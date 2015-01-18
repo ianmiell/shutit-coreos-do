@@ -5,6 +5,12 @@ import string
 
 class kubernetes_setup(ShutItModule):
 
+	def check_ready(self, shutit):
+		if shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['ssh_key_file'] == '':
+			shutit.log('ssh_key_file in shutit.tk.coreos_do_setup.coreos_do_setup must be set to a filename with the ')
+			return False
+		return True
+
 	def is_installed(self, shutit):
 		return False
 
