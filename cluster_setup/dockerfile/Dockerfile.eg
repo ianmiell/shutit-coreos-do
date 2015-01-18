@@ -6,7 +6,7 @@ RUN git clone https://github.com/ianmiell/shutit-distro.git
 WORKDIR /opt/shutit-coreos-do/cluster_setup
 
 # replace YOUR_ACCESS_TOKEN with your digital ocean access token
-RUN /opt/shutit/shutit build --shutit_module_path /opt/shutit-distro -s shutit.tk.coreos_do_setup.coreos_do_setup oauth_token YOUR_ACCESS_TOKEN --delivery bash
+RUN /opt/shutit/shutit build --shutit_module_path /opt/shutit-distro -s shutit.tk.cluster_config.cluster_config oauth_token YOUR_ACCESS_TOKEN --delivery bash
 
 # Don't run this - the image's purpose is to set up the coreos cluster
 CMD ["/bin/false"] 

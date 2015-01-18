@@ -12,7 +12,8 @@ class coreos_do_setup(ShutItModule):
 		# https://www.digitalocean.com/community/tutorials/how-to-set-up-a-coreos-cluster-on-digitalocean
 		# NEED: an ssh key set up with digital ocean in a file - we take the first one seen from an API request
 		# Read in the token
-		self._set_token(shutit)
+		import cluster_config
+		cluster_config.cluster_config.set_token(shutit)
 		# Get unique coreos discovery url
 		shutit.send(r'''curl -s -w "\n" https://discovery.etcd.io/new''')
 		discovery = shutit.get_output().strip()
@@ -53,9 +54,6 @@ class coreos_do_setup(ShutItModule):
 		return True
 
 	def get_config(self, shutit):
-		# oauth access token filename, defaults to context/access_token.dat
-		shutit.get_config(self.module_id,'oauth_token','')
-		shutit.get_config(self.module_id,'oauth_token_file','context/access_token.dat')
 		shutit.get_config(self.module_id,'ssh_key_id','')
 		shutit.get_config(self.module_id,'num_machines','3')
 		shutit.get_config(self.module_id,'ssh_key_file','') # optional, but needed for kub setup
@@ -66,24 +64,17 @@ class coreos_do_setup(ShutItModule):
 	
 	def finalize(self, shutit):
 		if shutit.cfg[self.module_id]['delete_machines']:
-			self._set_token(shutit)
+			cluster_config.set_token(shutit)
 			for droplet_data in shutit.cfg[self.module_id]['created_droplets']:
 				shutit.send('''curl -X DELETE -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_data['droplet_id'] + '"')
 		shutit.send('rm -rf /root/.ssh')
 		return True
-
-	def _set_token(self, shutit):
-		if shutit.cfg[self.module_id]['oauth_token'] != '':
-			token = shutit.cfg[self.module_id]['oauth_token']
-		else:
-			token = open(shutit.cfg[self.module_id]['oauth_token_file']).read().strip()
-		shutit.send('export TOKEN=' + token)
 
 def module():
 	return coreos_do_setup(
 		'shutit.tk.coreos_do_setup.coreos_do_setup', 158844783.001,
 		description='Digital Ocean CoreOS cluster setup',
 		maintainer='ian.miell@gmail.com',
-		depends=['shutit.tk.sd.curl.curl','shutit.tk.sd.jq.jq','shutit.tk.sd.openssh.openssh']
+		depends=['shutit.tk.cluster_config.cluster_config','shutit.tk.sd.curl.curl','shutit.tk.sd.jq.jq','shutit.tk.sd.openssh.openssh']
 	)
 
