@@ -11,7 +11,7 @@ then
     exit 1
 fi
 pushd ..
-$SHUTIT build -m /path/to/shutit-distro
+$SHUTIT build -m /path/to/shutit-distro:..  -s $DO_TOKEN
 popd
 
 #eg: shutit build --shutit_module_path /space/git/shutit-distro:.. -s shutit.tk.cluster_delete.cluster_delete oauth_token $DO_TOKEN

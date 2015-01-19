@@ -33,14 +33,20 @@ class kubernetes_setup(ShutItModule):
 		shutit.send('cd ~/kubernetes/_output/dockerized/bin/linux/amd64')
 		shutit.send('sudo mkdir -p /opt/bin')
 		shutit.send('sudo cp * /opt/bin')
-		shutit.send('cd /opt/bin')
+		shutit.logout()
+		# copy the executables over
+		shutit.multisend('scp core@' + master_public_ip + ':/tmp/kub.tar /tmp/kub.tar',{'connecting':'yes'})
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			public_ip = coreos_machine['public_ip']
 			if public_ip == master_public_ip:
 				# No need to do this on master!
 				continue
-			shutit.multisend('tar -czf - . | ssh core@' + public_ip + ' "sudo mkdir -p /opt/bin; cd /opt/bin; sudo tar xzvf -"',{'connecting':'yes'},timeout=60)
-		shutit.logout()
+			shutit.multisend('scp /tmp/kub.tar core@' + public_ip + ':/tmp/kub.tar',{'connecting':'yes'})
+			shutit.login(command='ssh core@' + public_ip, expect=' ~ ')
+			shutit.send('cd /opt/bin')
+			shutit.send('sudo tar -xf /tmp/kub.tar .')
+			shutit.send('rm -f /tmp/kub.tar')
+			shutit.logout()
 		# set up services by copying files
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			public_ip = coreos_machine['public_ip']
