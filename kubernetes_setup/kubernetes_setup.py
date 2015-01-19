@@ -33,6 +33,8 @@ class kubernetes_setup(ShutItModule):
 		shutit.send('cd ~/kubernetes/_output/dockerized/bin/linux/amd64')
 		shutit.send('sudo mkdir -p /opt/bin')
 		shutit.send('sudo cp * /opt/bin')
+		shutit.send('cd /opt/bin')
+		shutit.send('tar -cvf /tmp/kub.tar .')
 		shutit.logout()
 		# copy the executables over
 		shutit.multisend('scp core@' + master_public_ip + ':/tmp/kub.tar /tmp/kub.tar',{'connecting':'yes'})
