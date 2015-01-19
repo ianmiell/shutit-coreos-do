@@ -52,11 +52,11 @@ class kubernetes_setup(ShutItModule):
 			public_ip = coreos_machine['public_ip']
 			shutit.login(command='ssh core@' + public_ip, expect=' ~ ')
 			if public_ip == master_public_ip:
-				for filename in ('controller-manager.service','apiserver.service'):
+				for filename in ('controller-manager.service','apiserver.service','etcd-waiter.service','fleet.socket','kube-register.service','controller-manager.service','flannel.service','kube-apiserver.service','kube-scheduler.service','etcd.service','fleet.service','kube-controller-manager.service','setup-network-environment.service'):
 					shutit.send_host_file('/tmp/' + filename,'context/master/' + filename)
 					shutit.send('sudo cp /tmp/' + filename + ' /etc/systemd/system/' + filename)
 					shutit.send('rm -f /tmp/' + filename)
-			for filename in ('kubelet.service','proxy.service','docker.service','flannel.service','scheduler.service'):
+			for filename in ('kubelet.service','proxy.service','docker.service','flannel.service','scheduler.service','fleet.service','setup-network-environment.service','kube-proxy.service','kube-kubelet.service'):
 				shutit.send_host_file('/tmp/' + filename,'context/all/' + filename)
 				shutit.send('sudo cp /tmp/' + filename + ' /etc/systemd/system/' + filename)
 				shutit.send('rm -f /tmp/' + filename)

@@ -14,3 +14,6 @@ coreos:
       command: start
     - name: fleet.service
       command: start
+  update:
+    group: alpha
+    reboot-strategy: off
