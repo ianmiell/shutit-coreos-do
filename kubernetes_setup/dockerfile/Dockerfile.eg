@@ -1,4 +1,4 @@
-FROM imiell/sd_shutit
+FROM imiell/cluster_setup:latest_deps
 
 WORKDIR /opt
 RUN git clone https://github.com/ianmiell/shutit-coreos-do.git
