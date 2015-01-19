@@ -45,12 +45,6 @@ class coreos_do_setup(ShutItModule):
 			private_ip = shutit.get_output().strip().strip('"')
 			shutit.log('droplet_id: ' + droplet_id + ': ip address: ' + public_ip + '\nLog in with: ssh core@' + public_ip, add_final_message=True)
 			shutit.cfg[self.module_id]['created_droplets'].append({"droplet_id":droplet_id,"public_ip":public_ip,"private_ip":private_ip,"ssh_key_id":ssh_key_id})
-		# Copy private keys over - copy-ssh-id doesn't work as already authorized -A appears not to work internally.
-		if shutit.cfg[self.module_id]['ssh_key_file'] != '':
-			for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
-				shutit.send('sleep 60 # Wait a decent amount of time; this seems to be required',timeout=180)
-				public_ip = coreos_machine['public_ip']
-				shutit.multisend('''scp /root/.ssh/''' + shutit.cfg[self.module_id]['ssh_key_filename'] + ' core@' + public_ip + ':.ssh/',{'connecting':'yes'})
 		return True
 
 	def get_config(self, shutit):
