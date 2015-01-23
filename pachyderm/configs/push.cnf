@@ -1,0 +1,6 @@
+[repository]
+name:co_pachyderm
+push:yes
+
+[target]
+rm:false
