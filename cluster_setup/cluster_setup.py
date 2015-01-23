@@ -2,6 +2,7 @@
 """
 from shutit_module import ShutItModule
 import string
+import re
 
 class coreos_do_setup(ShutItModule):
 
@@ -38,11 +39,15 @@ class coreos_do_setup(ShutItModule):
 			shutit.send('sh /tmp/cmd.sh | jq ".droplet.id" -M')
 			droplet_id = shutit.get_output().strip()
 			shutit.send('rm -f /tmp/cmd.sh')
-			shutit.send('sleep 60 # Wait a decent amount of time; this seems to be required',timeout=180)
-			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "public") | .ip_address''' + "'")
-			public_ip = shutit.get_output().strip().strip('"')
-			shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "private") | .ip_address''' + "'")
-			private_ip = shutit.get_output().strip().strip('"')
+			public_ip = 'none'
+			private_ip = 'none'
+			shutit.send('sleep 30 # Wait a decent amount of time; this seems to be required',timeout=180)
+			while not re.match('^[0-9.]+$',public_ip):
+				shutit.send('sleep 10 # Wait a decent amount of time; this seems to be required',timeout=180)
+				shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "public") | .ip_address''' + "'")
+				public_ip = shutit.get_output().strip().strip('"')
+				shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "private") | .ip_address''' + "'")
+				private_ip = shutit.get_output().strip().strip('"')
 			shutit.log('droplet_id: ' + droplet_id + ': ip address: ' + public_ip + '\nLog in with: ssh core@' + public_ip, add_final_message=True)
 			shutit.cfg[self.module_id]['created_droplets'].append({"droplet_id":droplet_id,"public_ip":public_ip,"private_ip":private_ip,"ssh_key_id":ssh_key_id})
 		return True

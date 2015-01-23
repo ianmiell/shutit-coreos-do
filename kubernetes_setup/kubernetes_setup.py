@@ -13,8 +13,9 @@ class kubernetes_setup(ShutItModule):
 
 	def build(self, shutit):
 		#https://www.digitalocean.com/community/tutorials/how-to-install-and-configure-kubernetes-on-top-of-a-coreos-cluster
-		shutit.send('sleep 60 # wait before trying to log in')
+		shutit.send('sleep 30 # wait before trying to log in')
 		master_public_ip = shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets'][0]['public_ip']
+		master_private_ip = shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets'][0]['private_ip']
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
 			public_ip = coreos_machine['public_ip']
 			private_ip = coreos_machine['private_ip']
@@ -56,10 +57,14 @@ class kubernetes_setup(ShutItModule):
 					shutit.send_host_file('/tmp/' + filename,'context/master/' + filename)
 					shutit.send('sudo cp /tmp/' + filename + ' /etc/systemd/system/' + filename)
 					shutit.send('rm -f /tmp/' + filename)
-			for filename in ('kubelet.service','proxy.service','docker.service','flannel.service','scheduler.service','fleet.service','setup-network-environment.service','kube-proxy.service','kube-kubelet.service'):
-				shutit.send_host_file('/tmp/' + filename,'context/all/' + filename)
-				shutit.send('sudo cp /tmp/' + filename + ' /etc/systemd/system/' + filename)
-				shutit.send('rm -f /tmp/' + filename)
+			else:
+				shutit.send('mkdir -p /tmp/systemd')
+				for filename in ('kubelet.service','proxy.service','docker.service','flannel.service','scheduler.service','fleet.service','setup-network-environment.service','kube-proxy.service','kube-kubelet.service'):
+					shutit.send_host_file('/tmp/systemd/' + filename,'context/node/' + filename)
+					shutit.send_host_file('/tmp/systemd/' + filename,'context/node/' + filename)
+					shutit.send('''sed -i 's/<master-private-ip>/''' + master_private_ip + '''/' /tmp/systemd/''' + filename)
+					shutit.send('sudo cp /tmp/systemd/' + filename + ' /etc/systemd/system/' + filename)
+					shutit.send('rm -f /tmp/systemd/' + filename)
 			shutit.logout()
 		# Now enable services
 		for coreos_machine in shutit.cfg['shutit.tk.coreos_do_setup.coreos_do_setup']['created_droplets']:
