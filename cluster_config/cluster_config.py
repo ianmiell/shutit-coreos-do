@@ -24,6 +24,14 @@ class cluster_config(ShutItModule):
 			token = open(shutit.cfg['shutit.tk.cluster_config.cluster_config']['oauth_token_file']).read().strip()
 		shutit.send('export TOKEN=' + token)
 
+	@staticmethod
+	def get_token(shutit):
+		if shutit.cfg['shutit.tk.cluster_config.cluster_config']['oauth_token'] != '':
+			return shutit.cfg['shutit.tk.cluster_config.cluster_config']['oauth_token']
+		else:
+			return open(shutit.cfg['shutit.tk.cluster_config.cluster_config']['oauth_token_file']).read().strip()
+
+
 def module():
 	return cluster_config(
 		'shutit.tk.cluster_config.cluster_config', 158844783.0001,
