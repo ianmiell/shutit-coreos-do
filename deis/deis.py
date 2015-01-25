@@ -38,20 +38,20 @@ class deis(ShutItModule):
 		shutit.send('curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ' + token + '''" -d '{"name":"''' + domain + '''","ip_address":"''' + output[0] + '''"}' "https://api.digitalocean.com/v2/domains/"''')
 		# set up the CNAME record name=* hostname=@
 		shutit.send('curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ' + token + '''" -d '{"type":"CNAME","name":"*","data":"@","priority":null,"port":null,"weight":null}' "https://api.digitalocean.com/v2/domains/''' + domain + '''/records"''')
-		# set up the 3 @ A records
-		# set up the 3 deis-1/2/3 A records
 		count = 1
 		for addr in output:
+			# set up the 3 @ A records
 			shutit.send('''curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ''' + token + '''" -d '{"type":"A","name":"@","data":"''' + addr + '''","priority":null,"port":null,"weight":null}' "https://api.digitalocean.com/v2/domains/''' + domain + '''/records"''')
+			# set up the 3 deis-1/2/3 A records
 			shutit.send('curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ' + token + '''" -d '{"type":"A","name":"deis-''' + str(count) + '''","data":"''' + addr + '''","priority":null,"port":null,"weight":null}' "https://api.digitalocean.com/v2/domains/''' + domain + '''/records"''')
 			count += 1
+		shutit.send('sleep 60 # pause seems to help here')
 		shutit.multisend('scp -i /root/.ssh/' + ssh_key_name + ' /root/.ssh/' + ssh_key_name + ' core@' + output[0] + ':.ssh/',{'continue connecting':'yes'})
 		shutit.login(command='ssh -i /root/.ssh/' + ssh_key_name + ' core@' + output[0],expect=' ~ ')
 		shutit.send('chmod 0600 ~/.ssh/' + ssh_key_name)
 		shutit.send('eval `ssh-agent -s`')
 		shutit.send('ssh-add ~/.ssh/' + ssh_key_name)
 		shutit.send('export DEISCTL_TUNNEL=' + output[0])
-		shutit.send('sleep 60 # pause seems to help here')
 		shutit.send('deisctl config platform set sshPrivateKey=~/.ssh/' + ssh_key_name)
 		shutit.send('deisctl config platform set domain=' + domain)
 		shutit.send('deisctl install platform')
