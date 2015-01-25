@@ -1,0 +1,6 @@
+[repository]
+name:co_deis
+push:yes
+
+[target]
+rm:false

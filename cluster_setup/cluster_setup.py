@@ -34,7 +34,8 @@ class coreos_do_setup(ShutItModule):
 		for machine in range(1,int(shutit.cfg[self.module_id]['num_machines']) + 1):
 			cloud_config = open('context/cloud-config').read().strip()
 			cloud_config = string.replace(cloud_config,'DISCOVERY',discovery)
-			command = '''curl -s -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"name":"coreos-''' + str(machine) + '''","region":"nyc3","size":"512mb","image":"coreos-stable","ssh_keys":["''' + ssh_key_id + '''"],"backups":false,"ipv6":true,"user_data":"''' + cloud_config + '''","private_networking":true}' "https://api.digitalocean.com/v2/droplets"'''
+			hostname = "coreos-" + str(machine)
+			command = '''curl -s -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"name":"''' + hostname + '''","region":"nyc3","size":"512mb","image":"coreos-stable","ssh_keys":["''' + ssh_key_id + '''"],"backups":false,"ipv6":true,"user_data":"''' + cloud_config + '''","private_networking":true}' "https://api.digitalocean.com/v2/droplets"'''
 			shutit.send_file('/tmp/cmd.sh',command)
 			shutit.send('sh /tmp/cmd.sh | jq ".droplet.id" -M')
 			droplet_id = shutit.get_output().strip()
@@ -49,7 +50,7 @@ class coreos_do_setup(ShutItModule):
 				shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/""" + droplet_id + '''" | jq -M '.droplet.networks.v4[] | select(.type == "private") | .ip_address''' + "'")
 				private_ip = shutit.get_output().strip().strip('"')
 			shutit.log('droplet_id: ' + droplet_id + ': ip address: ' + public_ip + '\nLog in with: ssh core@' + public_ip, add_final_message=True)
-			shutit.cfg[self.module_id]['created_droplets'].append({"droplet_id":droplet_id,"public_ip":public_ip,"private_ip":private_ip,"ssh_key_id":ssh_key_id})
+			shutit.cfg[self.module_id]['created_droplets'].append({"droplet_id":droplet_id,"public_ip":public_ip,"private_ip":private_ip,"ssh_key_id":ssh_key_id,"hostname":hostname})
 		return True
 
 	def get_config(self, shutit):
