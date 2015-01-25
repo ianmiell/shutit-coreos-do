@@ -22,7 +22,6 @@ class deis(ShutItModule):
 		shutit.send('git clone https://github.com/deis/deis.git')
 		shutit.send('cd deis')
 		shutit.send('make discovery-url')
-		# TODO: give each key a unique name
 		ssh_key_name = 'deis_' + str(time.time())
 		shutit.send('''ssh-keygen -q -t rsa -f ~/.ssh/''' + ssh_key_name + ''' -N '' -C deis''')
 		shutit.multisend('docl authorize',{'Enter your DO Token:':token})
@@ -31,6 +30,8 @@ class deis(ShutItModule):
 		ssh_key = shutit.send_and_get_output('docl keys | grep -w ' + ssh_key_name + r""" | sed 's/.*id: \([0-9]*\))/\1/'""")
 		ssh_key = ssh_key.strip()
 		output = shutit.send_and_get_output('./contrib/digitalocean/provision-do-cluster.sh nyc3 ' + ssh_key + ' 512MB | grep "^[0-9]"').split()
+		if len(output) != 3:
+			shutit.fail('unexpected output from cluster provisioning: ' + str(output))
 		# delete the domain
 		shutit.send('curl -s -X DELETE -H "Content-Type: application/json" -H "Authorization: Bearer ' + token + '" "https://api.digitalocean.com/v2/domains/' + domain + '"')
 		# create the domain
@@ -44,44 +45,13 @@ class deis(ShutItModule):
 			shutit.send('''curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ''' + token + '''" -d '{"type":"A","name":"@","data":"''' + addr + '''","priority":null,"port":null,"weight":null}' "https://api.digitalocean.com/v2/domains/''' + domain + '''/records"''')
 			shutit.send('curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ' + token + '''" -d '{"type":"A","name":"deis-''' + str(count) + '''","data":"''' + addr + '''","priority":null,"port":null,"weight":null}' "https://api.digitalocean.com/v2/domains/''' + domain + '''/records"''')
 			count += 1
-#		shutit.pause_point('''================================================================================
-#Now go here: https://cloud.digitalocean.com/domains
-#and add:
-#- An entry for your domain name pointing at ''' + output[0] + ''' 
-#- A wildcard CNAME record at your top-level domain, i.e. a CNAME record with * as the name, and @ as the canonical hostname
-#- For each CoreOS machine created, an A-record that points to the TLD, i.e. an A-record named @, with the droplet's public IP address
-#- For each CoreOS machine created, an A-record that points to the name, ie deis-1, deis-2, deis-3 so you can go to each server directly
-#
-#Created machines are:
-#
-#''' + output[0] + '\n' + output[1] + '\n' + output[2] + '\n' + '''
-#
-#The zone files will have the following entries in it:
-#
-#*   CNAME   @
-#@   IN A    ''' + output[0] + '''
-#@   IN A    ''' + output[1] + '''
-#@   IN A    ''' + output[2] + '''
-#
-#For convenience, you can also set up DNS records for each node:
-#
-#deis-1   IN A    ''' + output[0] + '''
-#deis-2   IN A    ''' + output[1] + '''
-#deis-3   IN A    ''' + output[2] + '''
-#
-#See here if you need more info: https://www.digitalocean.com/community/tutorials/how-to-set-up-a-host-name-with-digitalocean
-#================================================================================
-#
-#WHEN FINISHED, HIT "CRTL" THEN "]" AT THE SAME TIME TO CONTINUE
-#
-#================================================================================ ''')
-		shutit.pause_point('test domain')
 		shutit.multisend('scp -i /root/.ssh/' + ssh_key_name + ' /root/.ssh/' + ssh_key_name + ' core@' + output[0] + ':.ssh/',{'continue connecting':'yes'})
 		shutit.login(command='ssh -i /root/.ssh/' + ssh_key_name + ' core@' + output[0],expect=' ~ ')
 		shutit.send('chmod 0600 ~/.ssh/' + ssh_key_name)
 		shutit.send('eval `ssh-agent -s`')
 		shutit.send('ssh-add ~/.ssh/' + ssh_key_name)
 		shutit.send('export DEISCTL_TUNNEL=' + output[0])
+		shutit.send('sleep 60 # pause seems to help here')
 		shutit.send('deisctl config platform set sshPrivateKey=~/.ssh/' + ssh_key_name)
 		shutit.send('deisctl config platform set domain=' + domain)
 		shutit.send('deisctl install platform')
