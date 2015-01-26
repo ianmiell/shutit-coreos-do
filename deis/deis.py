@@ -29,7 +29,7 @@ class deis(ShutItModule):
 		shutit.send('docl keys | grep -w ' + ssh_key_name)
 		ssh_key = shutit.send_and_get_output('docl keys | grep -w ' + ssh_key_name + r""" | sed 's/.*id: \([0-9]*\))/\1/'""")
 		ssh_key = ssh_key.strip()
-		output = shutit.send_and_get_output('./contrib/digitalocean/provision-do-cluster.sh nyc3 ' + ssh_key + ' 512MB | grep "^[0-9]"').split()
+		output = shutit.send_and_get_output('./contrib/digitalocean/provision-do-cluster.sh nyc3 ' + ssh_key + ' 4GB | grep "^[0-9]"').split()
 		if len(output) != 3:
 			shutit.fail('unexpected output from cluster provisioning: ' + str(output))
 		# delete the domain
@@ -45,9 +45,9 @@ class deis(ShutItModule):
 			# set up the 3 deis-1/2/3 A records
 			shutit.send('curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ' + token + '''" -d '{"type":"A","name":"deis-''' + str(count) + '''","data":"''' + addr + '''","priority":null,"port":null,"weight":null}' "https://api.digitalocean.com/v2/domains/''' + domain + '''/records"''')
 			count += 1
-		shutit.send('sleep 60 # pause seems to help here')
+		shutit.send('sleep 120 # pause seems to help here')
 		shutit.multisend('scp -i /root/.ssh/' + ssh_key_name + ' /root/.ssh/' + ssh_key_name + ' core@' + output[0] + ':.ssh/',{'continue connecting':'yes'})
-		shutit.login(command='ssh -i /root/.ssh/' + ssh_key_name + ' core@' + output[0],expect=' ~ ')
+		shutit.login(command='ssh -i /root/.ssh/' + ssh_key_name + ' core@' + output[0],expect=' ~ ') # sometimes does not come back?
 		shutit.send('chmod 0600 ~/.ssh/' + ssh_key_name)
 		shutit.send('eval `ssh-agent -s`')
 		shutit.send('ssh-add ~/.ssh/' + ssh_key_name)
@@ -57,6 +57,13 @@ class deis(ShutItModule):
 		shutit.send('deisctl install platform')
 		shutit.send('deisctl start platform #takes a while',timeout=10000)
 		shutit.logout('ssh core@' + output[1])
+		shutit.send('mkdir tmp')
+		shutit.send('cd tmp')
+		shutit.send('curl -sSL http://deis.io/deis-cli/install.sh | sh')
+		shutit.send('mv deis /usr/bin')
+		shutit.send('cd ..')
+		shutit.send('rm -rf tmp')
+		shutit.multisend('deis register http://' + domain + ':8000',{'username:':'admin','password':'admin','email:':'admin@' + domain})
 		return True
 
 	def get_config(self, shutit):
