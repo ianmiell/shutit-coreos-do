@@ -1,4 +1,4 @@
-FROM imiell/sd_shutit
+FROM imiell/sd_deis_deps
 
 WORKDIR /opt
 RUN git clone https://github.com/ianmiell/shutit-coreos-do.git
@@ -7,7 +7,7 @@ WORKDIR /opt/shutit-coreos-do/deis
 
 # replace YOUR_ACCESS_TOKEN with your digital ocean access token
 # replace YOUR_DOMAIN with your desired paas domain name (under your control)
-RUN /opt/shutit/shutit build --shutit_module_path /opt/shutit-distro:.. -s shutit.tk.coreos_do_setup.coreos_do_setup oauth_token YOUR_ACCESS_TOKEN -s shutit.tk.deis.deis domain YOUR_DOMAIN --delivery bash
+RUN /opt/shutit/shutit build --shutit_module_path /opt/shutit-distro:.. -s shutit.tk.cluster_config.cluster_config oauth_token YOUR_ACCESS_TOKEN -s shutit.tk.deis.deis domain YOUR_DOMAIN --delivery bash
 
 # Don't run this - the image's purpose is to set up the deis cluster
 CMD ["/bin/false"] 

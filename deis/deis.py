@@ -75,6 +75,6 @@ def module():
 		'shutit.tk.deis.deis', 158844783.006,
 		description='deis on CoreOS',
 		maintainer='ian.miell@gmail.com',
-		depends=['shutit.tk.sd.ruby.ruby','shutit.tk.sd.curl.curl','shutit.tk.sd.git.git','shutit.tk.sd.openssh.openssh','shutit.tk.cluster_config.cluster_config','shutit.tk.sd.which.which','shutit.tk.sd.deis_client.deis_client']
+		depends=['shutit.tk.sd.ruby.ruby','shutit.tk.sd.curl.curl','shutit.tk.sd.git.git','shutit.tk.sd.openssh.openssh','shutit.tk.cluster_config.cluster_config','shutit.tk.sd.which.which','shutit.tk.sd.deis_client.deis_client','shutit.tk.sd.shutit.shutit']
 	)
 
