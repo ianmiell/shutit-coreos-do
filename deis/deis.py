@@ -64,6 +64,7 @@ class deis(ShutItModule):
 		shutit.send('cd ..')
 		shutit.send('rm -rf tmp')
 		shutit.multisend('deis register http://' + domain + ':8000',{'username:':'admin','password':'admin','email:':'admin@' + domain})
+		shutit.log('Deis cluster has been set up for domain: ' + domain + '\n\nadmin user is "admin" and password is "admin".\n\nSee here for info on what to do next: http://docs.deis.io/en/latest/using_deis/', add_final_message=True)
 		return True
 
 	def get_config(self, shutit):
