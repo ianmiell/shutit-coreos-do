@@ -1,0 +1,2 @@
+shutit build --shutit_module_path /home/imiell/shutit-distro:.. -s shutit.tk.cluster_config.cluster_config oauth_token bb39a0a4593578ec537fa5976c8f0b9b12acd3cc0f108d0b797dcc9ef913730e -s shutit.tk.kubernetes_coreos_setup.kubernetes_coreos_setup ssh_key_file /home/imiell/.ssh/id_rsa -s shutit.tk.kubernetes_coreos_setup.kubernetes_coreos_setup ssh_key_id 54:17:30:75:f8:7d:fd:ab:de:ad:30:90:1d:39:db:05 --image_tag imiell/cluster_setup:latest_deps --ignoreimage -s shutit.tk.kubernetes_coreos_setup.kubernetes_coreos_setup num_machines 2
+
