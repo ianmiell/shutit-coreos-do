@@ -1,0 +1,6 @@
+[repository]
+name:kubernetes_setup
+push:yes
+
+[target]
+rm:false
