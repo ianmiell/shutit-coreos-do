@@ -36,6 +36,7 @@ class kubernetes_coreos_setup(ShutItModule):
 			command = '''curl -s -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"name":"coreos-''' + str(machine) + '''","region":"nyc3","size":"512mb","image":"coreos-stable","ssh_keys":["''' + ssh_key_id + '''"],"backups":false,"ipv6":true,"user_data":"''' + cloud_config + '''","private_networking":true}' "https://api.digitalocean.com/v2/droplets"'''
 			shutit.send_file('/tmp/cmd.sh',command)
 			shutit.send('sh /tmp/cmd.sh > /tmp/out')
+			shutit.send('cat /tmp/cmd.sh') #debug
 			shutit.send('cat /tmp/out') #debug
 			shutit.send('cat /tmp/out | jq ".droplet.id" -M')
 			droplet_id = shutit.get_output().strip()
