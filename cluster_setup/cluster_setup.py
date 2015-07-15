@@ -16,6 +16,7 @@ class coreos_do_setup(ShutItModule):
 		import cluster_config
 		cluster_config.cluster_config.set_token(shutit)
 		# Get unique coreos discovery url
+		shutit.install('curl jq openssh-client')
 		shutit.send(r'''curl -s -w "\n" https://discovery.etcd.io/new''')
 		discovery = shutit.get_output().strip()
 		if shutit.cfg[self.module_id]['ssh_key_id'] == '':
@@ -75,6 +76,6 @@ def module():
 		'shutit.tk.coreos_do_setup.coreos_do_setup', 158844783.001,
 		description='Digital Ocean CoreOS cluster setup',
 		maintainer='ian.miell@gmail.com',
-		depends=['shutit.tk.cluster_config.cluster_config','shutit.tk.sd.curl.curl','shutit.tk.sd.jq.jq','shutit.tk.sd.openssh.openssh']
+		depends=['shutit.tk.cluster_config.cluster_config']
 	)
 

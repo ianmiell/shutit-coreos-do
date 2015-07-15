@@ -14,8 +14,8 @@ class cluster_delete(ShutItModule):
 		# Read in the token
 		import cluster_config
 		cluster_config.cluster_config.set_token(shutit)
-		shutit.send("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/" | jq '.droplets[] | .id' -M""")
-		droplet_ids = shutit.get_output().strip()
+		shutit.install('curl jq')
+		droplet_ids = shutit.send_and_get_output("""curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/" | jq '.droplets[] | .id' -M""")
 		droplet_id_list = droplet_ids.split()
 		for droplet_id in droplet_id_list:
 			shutit.send('''curl -s -X DELETE -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '"')
@@ -33,6 +33,6 @@ def module():
 		'shutit.tk.cluster_delete.cluster_delete', 158844783.003,
 		description='Digital Ocean CoreOS deletion',
 		maintainer='ian.miell@gmail.com',
-		depends=['shutit.tk.cluster_config.cluster_config','shutit.tk.sd.curl.curl','shutit.tk.sd.jq.jq']
+		depends=['shutit.tk.cluster_config.cluster_config']
 	)
 

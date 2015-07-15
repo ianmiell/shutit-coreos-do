@@ -34,14 +34,13 @@ class kubernetes_coreos_setup(ShutItModule):
 			else:
 				cloud_config = open('context/node/cloud-config').read().strip()
 				cloud_config = string.replace(cloud_config,'<master-private-ip>',master_private_ip)
-			command = '''curl --stderr /tmp/err -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"name":"coreos-''' + str(machine) + '''","region":"nyc3","size":"512mb","image":"coreos-stable","ssh_keys":["''' + ssh_key_id + '''"],"backups":false,"ipv6":true,"user_data":"''' + cloud_config + '''","private_networking":true}' "https://api.digitalocean.com/v2/droplets"'''
+			command = '''curl --stderr /tmp/err -X POST -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" -d '{"name":"coreos-''' + str(machine) + '''","region":"nyc3","size":"512mb","image":"coreos-alpha","ssh_keys":["''' + ssh_key_id + '''"],"backups":false,"ipv6":true,"user_data":"''' + cloud_config + '''","private_networking":true}' "https://api.digitalocean.com/v2/droplets"'''
 			shutit.send_file('/tmp/cmd.sh',command)
 			shutit.send('sh /tmp/cmd.sh > /tmp/out')
 			shutit.send('cat /tmp/err') #debug
 			shutit.send('cat /tmp/out') #debug
 			shutit.send('cat /tmp/out | jq ".droplet.id" -M')
 			droplet_id = shutit.get_output().strip()
-			shutit.pause_point('')
 			shutit.send('rm -f /tmp/out')
 			shutit.send('rm -f /tmp/cmd.sh')
 			public_ip = 'none'
@@ -52,7 +51,7 @@ class kubernetes_coreos_setup(ShutItModule):
 				if count > 20:
 					print "failed to start a machine?"
 					sys.exit(1)
-				shutit.send('sleep 60 # Wait a decent amount of time; this seems to be required',timeout=180)
+				shutit.send('sleep 10 # Wait a decent amount of time; this seems to be required',timeout=180)
 				shutit.send('''curl -s -X GET -H 'Content-Type: application/json' -H "Authorization: Bearer $TOKEN" "https://api.digitalocean.com/v2/droplets/''' + droplet_id + '''" > /tmp/out''')
 				shutit.send('''cat /tmp/out | jq -M '.droplet.networks.v4[] | select(.type == "public") | .ip_address''' + "'")
 				public_ip = shutit.get_output().strip().strip('"')
